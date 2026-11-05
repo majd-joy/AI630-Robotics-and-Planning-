@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI630 - Workflow</title>
+<style>
+  :root { --bg:#f0f2f5; --card:#fff; --text:#1c2530; --muted:#55656f; --line:#d5dbe0;
+          box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#11161b; --card:#1a222a; --text:#e8edf1; --muted:#9aa8b3; --line:#34424d; } }
+  :root[data-theme="dark"] { --bg:#11161b; --card:#1a222a; --text:#e8edf1; --muted:#9aa8b3; --line:#34424d; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-padding-top:env(safe-area-inset-top,0px); }
+  body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; background:var(--bg); color:var(--text); padding:20px; display:flex; justify-content:center; }
+  .container { max-width:900px; width:100%; background:var(--card); border-radius:15px; padding:30px 22px; box-shadow:0 10px 40px rgba(0,0,0,.15); }
+  h1 { text-align:center; margin-bottom:8px; }
+  .sub { text-align:center; color:var(--muted); margin-bottom:24px; }
+  .flow-box { border-radius:12px; padding:18px; margin:0 auto; max-width:420px; text-align:center; color:#1c2530; }
+  .flow-box h3 { margin-bottom:6px; } .flow-box p { line-height:1.6; }
+  .start{background:#84fab0} .sensor{background:#a8edea} .wait{background:#fcd5ce} .decision{background:#ffecd2}
+  .action{background:#e0c3fc} .learning{background:#fa709a} .save{background:#30cfd0}
+  .arrow { width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-top:26px solid #8a96a0; margin:10px auto; }
+  .lab { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:18px; margin:6px auto; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .lab h4 { font-size:1.05rem; } .lab .hint { color:var(--muted); font-size:.9rem; text-align:center; line-height:1.6; }
+  .board { direction:ltr; display:grid; grid-template-columns:repeat(8,1fr); width:min(100%,432px); border:2px solid #37474f; }
+  .cell { aspect-ratio:1; position:relative; border:1px solid #c3ccd1; background:#f7f9fa; color:#10222b; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:clamp(9px,2.2vw,12px); line-height:1.1; }
+  .cell.wall { background:#37474f; } .cell.goal { outline:3px solid #e0a800; outline-offset:-3px; } .cell.start { outline:3px solid #2e9e5b; outline-offset:-3px; }
+  .cell.path { box-shadow:inset 0 0 0 3px #e07a2f; }
+  .cell .a { font-size:clamp(14px,4vw,22px); color:#b3261e; line-height:1; } .cell .t { position:absolute; top:1px; inset-inline-start:3px; font-weight:700; }
+  .cell .r { position:absolute; font-size:clamp(16px,5vw,26px); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; }
+  button, select { font:inherit; padding:8px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
+  button.main { background:#11686c; border-color:#11686c; color:#fff; } button:focus-visible, select:focus-visible { outline:3px solid #e07a2f; outline-offset:2px; }
+  .stats { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; font-size:.95rem; } .stats b { color:#11686c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stats b { color:#7fd6da; } }
+  .loop { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin:8px 0; }
+  .loop div { background:#e0c3fc; color:#1c2530; border-radius:10px; padding:8px 12px; font-size:.9rem; text-align:center; }
+  .loop span { color:var(--muted); font-size:1.2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🤖 مشروع AI630 - Workflow</h1>
+<p class="sub">من الفكرة للنتائج. جرّبي المحاكاتين بنفسك لتشوفي كيف الروبوت بيفكر.</p>
+
+<div class="flow-box start"><h3>🚀 البداية: بناء البيئة</h3><p>شبكة 8×8: عوائق، بداية S، وهدف G</p></div>
+<div class="arrow"></div>
+<div class="flow-box sensor"><h3>📐 صياغة الـ MDP</h3><p>حالات S · أفعال A · انتقالات P · مكافآت R · خصم γ<br>(-1 لكل خطوة، +100 للهدف، -10 للاصطدام)</p></div>
+<div class="arrow"></div>
+<div class="flow-box decision"><h3>🗺️ التخطيط (النموذج معروف)</h3><p>Value Iteration و Policy Iteration<br>الناتج: سياسة مثلى تُستخدم كمرجع</p></div>
+<div class="arrow"></div>
+
+<div class="lab">
+  <h4>جرّبي Value Iteration خطوة بخطوة</h4>
+  <p class="hint">قيمة الهدف تنتشر خطوة واحدة بكل تكرار، مثل موجة. الأرقام هي V(s) والأسهم هي السياسة الحالية.</p>
+  <div class="board" id="viBoard"></div>
+  <div class="row"><button class="main" id="viNext">التكرار التالي</button><button id="viAuto">تشغيل تلقائي</button><button id="viReset">إعادة</button></div>
+  <div class="stats" id="viStats"></div>
+</div>
+<div class="arrow"></div>
+
+<div class="flow-box action"><h3>🎮 التعلم (بدون نموذج)</h3><p>الروبوت ما بيعرف قوانين البيئة، بيجرّب ويتعلم:<br>Q-Learning و SARSA</p></div>
+<div class="loop">
+  <div>1) يشوف حالته s</div><span>←</span><div>2) يختار فعل a (ε-greedy)</div><span>←</span><div>3) يتحرك ويستلم مكافأة r</div><span>←</span><div>4) يحدّث Q(s,a)</div><span>↺</span>
+</div>
+
+<div class="lab">
+  <h4>شاهدي Q-Learning وهو بيتعلم</h4>
+  <p class="hint">الروبوت 🤖 يتحرك عشوائياً بالبداية (ε كبير)، وكل ما تعلم أكثر صار يمشي بالمسار الأفضل. الأرقام هي أفضل قيمة Q لكل خلية.</p>
+  <div class="board" id="qBoard"></div>
+  <div class="row">
+    <button class="main" id="qRun">ابدأ التعلم</button><button id="qPath">أظهر أفضل مسار</button><button id="qReset">إعادة</button>
+    <select id="qSpeed" aria-label="السرعة"><option value="1">بطيء</option><option value="6" selected>عادي</option><option value="60">سريع</option></select>
+  </div>
+  <div class="stats" id="qStats"></div>
+</div>
+<div class="arrow"></div>
+
+<div class="flow-box wait"><h3>🧪 التجارب</h3><p>ε و α و γ · متاهة معقدة · انزلاق 20%<br>كل تجربة تتكرر بـ 10 seeds</p></div>
+<div class="arrow"></div>
+<div class="flow-box learning"><h3>📊 التقييم والمقارنة</h3><p>طول المسار · المكافأة · نسبة النجاح<br>الاصطدامات · سرعة التقارب</p></div>
+<div class="arrow"></div>
+<div class="flow-box save"><h3>📦 التسليم</h3><p>كود Python + تقرير + عرض تقديمي</p></div>
+</div>
+
+<script>
+const M=["S.......",".##.....",".....#..","..#..#..","..#.....",".....#..",".##..#..",".......G"];
+const W=8,G=0.95,ACT=[[-1,0],[1,0],[0,-1],[0,1]],AR=["↑","↓","←","→"];
+const wall=new Set(),free=[];let START=0,GOAL=63;
+M.forEach((row,r)=>[...row].forEach((ch,c)=>{const s=r*W+c;if(ch==="#")wall.add(s);else free.push(s);if(ch==="S")START=s;if(ch==="G")GOAL=s;}));
+function mv(s,a){const r=Math.floor(s/W)+ACT[a][0],c=s%W+ACT[a][1];
+  if(r<0||r>=W||c<0||c>=W||wall.has(r*W+c))return[s,-10,false];
+  const t=r*W+c;return t===GOAL?[t,100,true]:[t,-1,false];}
+function mk(id){const el=document.getElementById(id);el.innerHTML="";const cells=[];
+  for(let s=0;s<64;s++){const d=document.createElement("div");d.className="cell"+(wall.has(s)?" wall":"")+(s===START?" start":"")+(s===GOAL?" goal":"");el.appendChild(d);cells.push(d);}return cells;}
+function paint(cells,vals,pol,robot,path){
+  let lo=1e9,hi=-1e9;for(const s of free){if(s===GOAL)continue;lo=Math.min(lo,vals[s]);hi=Math.max(hi,vals[s]);}
+  cells.forEach((d,s)=>{if(wall.has(s)){d.innerHTML="";return;}
+    d.classList.toggle("path",!!(path&&path.has(s)));
+    if(s===GOAL){d.innerHTML='<span class="a" style="color:#10222b">G</span>';return;}
+    const t=hi>lo?(vals[s]-lo)/(hi-lo):0;
+    d.style.background="rgba(76,195,200,"+(0.08+0.6*t).toFixed(2)+")";
+    const tag=s===START?'<span class="t">S</span>':"";
+    d.innerHTML=tag+(pol[s]>=0?'<span class="a">'+AR[pol[s]]+'</span>':"")+'<span>'+vals[s].toFixed(1)+'</span>'+(robot===s?'<span class="r">🤖</span>':"");});}
+
+/* ---- Value Iteration ---- */
+const viCells=mk("viBoard");let V,it,auto=null,lastD;
+function viPolicy(){const p=new Array(64).fill(-1);for(const s of free){if(s===GOAL)continue;let b=-1e9;for(let a=0;a<4;a++){const[t,r,dn]=mv(s,a);const q=r+(dn?0:G*V[t]);if(q>b+1e-9){b=q;p[s]=a;}}}return p;}
+function viDraw(){const p=it===0?new Array(64).fill(-1):viPolicy();paint(viCells,V,p,-1,null);
+  document.getElementById("viStats").innerHTML="التكرار: <b>"+it+"</b>"+(it?" · أكبر تغيير: <b>"+lastD.toFixed(3)+"</b>":"")+(it&&lastD<1e-8?" · <b>تقارب! V*(البداية) = "+V[START].toFixed(1)+"</b>":"");}
+function viStep(){const Vn=V.slice();let d=0;for(const s of free){if(s===GOAL)continue;let b=-1e9;
+  for(let a=0;a<4;a++){const[t,r,dn]=mv(s,a);b=Math.max(b,r+(dn?0:G*V[t]));}Vn[s]=b;d=Math.max(d,Math.abs(b-V[s]));}
+  V=Vn;it++;lastD=d;viDraw();if(d<1e-8&&auto){stopAuto();}}
+function stopAuto(){clearInterval(auto);auto=null;document.getElementById("viAuto").textContent="تشغيل تلقائي";}
+function viReset(){stopAuto();V=new Array(64).fill(0);it=0;viDraw();}
+document.getElementById("viNext").onclick=viStep;
+document.getElementById("viReset").onclick=viReset;
+document.getElementById("viAuto").onclick=()=>{if(auto){stopAuto();return;}document.getElementById("viAuto").textContent="إيقاف";auto=setInterval(viStep,450);};
+viReset();
+
+/* ---- Q-Learning ---- */
+const qCells=mk("qBoard");let Q,s,ep,eps,steps,total,lastR,lastS,timer=null,showPath=false;
+function argmax(q){let m=-1e9,b=[];for(let a=0;a<4;a++){if(q[a]>m+1e-12){m=q[a];b=[a];}else if(Math.abs(q[a]-m)<=1e-12)b.push(a);}return b[Math.floor(Math.random()*b.length)];}
+function qInit(){stopQ();Q=Array.from({length:64},()=>[0,0,0,0]);s=START;ep=0;eps=1;steps=0;total=0;lastR="-";lastS="-";qDraw();}
+function qStep(){const a=Math.random()<eps?Math.floor(Math.random()*4):argmax(Q[s]);const[t,r,dn]=mv(s,a);
+  Q[s][a]+=0.1*(r+(dn?0:G*Math.max(...Q[t]))-Q[s][a]);s=t;steps++;total+=r;
+  if(dn||steps>=200){ep++;lastR=total;lastS=dn?steps:"200 (ما وصل)";eps=Math.max(0.05,eps*0.99);s=START;steps=0;total=0;}}
+function bestPath(){const p=new Set([START]);let c=START;for(let i=0;i<40;i++){const q=Q[c];if(q.every(v=>v===0))return{p,ok:false};const[t,,dn]=mv(c,q.indexOf(Math.max(...q)));if(t===c)return{p,ok:false};p.add(t);c=t;if(dn)return{p,ok:true,len:i+1};}return{p,ok:false};}
+function qDraw(){const vals=Q.map(q=>Math.max(...q));const pol=Q.map((q,i)=>q.some(v=>v!==0)&&!wall.has(i)?q.indexOf(Math.max(...q)):-1);
+  let extra="";let path=null;if(showPath){const b=bestPath();path=b.p;extra=b.ok?" · المسار الأفضل: <b>"+b.len+" خطوة</b>":" · المسار لسا ما وصل للهدف";}
+  paint(qCells,vals,pol,s,path);
+  document.getElementById("qStats").innerHTML="الحلقة: <b>"+ep+"</b> · ε: <b>"+eps.toFixed(2)+"</b> · خطوات آخر حلقة: <b>"+lastS+"</b> · مكافأة آخر حلقة: <b>"+lastR+"</b>"+extra;}
+function stopQ(){clearInterval(timer);timer=null;document.getElementById("qRun").textContent="ابدأ التعلم";}
+document.getElementById("qRun").onclick=()=>{if(timer){stopQ();return;}document.getElementById("qRun").textContent="إيقاف";
+  timer=setInterval(()=>{const k=+document.getElementById("qSpeed").value;for(let i=0;i<k;i++)qStep();qDraw();},40);};
+document.getElementById("qPath").onclick=()=>{showPath=!showPath;qDraw();};
+document.getElementById("qReset").onclick=()=>{showPath=false;qInit();};
+qInit();
+</script>
+</body>
+</html>
