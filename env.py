@@ -15,6 +15,8 @@ so Dynamic Programming can use them, while model-free methods only call
 `env.step(...)` (interaction with the environment).
 """
 
+import random
+
 ACTION_NAMES = ["Up", "Down", "Left", "Right"]
 ARROWS = ["\u2191", "\u2193", "\u2190", "\u2192"]
 MOVES = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -44,7 +46,92 @@ COMPLEX_MAZE = [
 ]
 
 
+def generate_random_maze(height=8, width=8, obstacle_probability=0.20,
+                         rng=None, max_attempts=1000):
+    """
+    Generate a random, solvable maze.
+
+    The start is fixed at the upper-left corner and the goal at the
+    lower-right corner. Every other cell independently becomes an obstacle
+    with probability `obstacle_probability`.
+
+    Returns a list of strings in the same format as SIMPLE_MAZE/COMPLEX_MAZE.
+    A ValueError is raised if a solvable maze cannot be generated.
+    """
+    if height < 2 or width < 2:
+        raise ValueError("height and width must both be at least 2")
+    if not 0.0 <= obstacle_probability < 1.0:
+        raise ValueError("obstacle_probability must be in [0, 1)")
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be at least 1")
+
+    rng = rng if rng is not None else random.Random()
+
+    for _ in range(max_attempts):
+        grid = []
+        for r in range(height):
+            row = []
+            for c in range(width):
+                is_endpoint = (r == 0 and c == 0) or (
+                    r == height - 1 and c == width - 1
+                )
+                row.append("#" if (not is_endpoint and
+                                   rng.random() < obstacle_probability) else ".")
+            grid.append(row)
+
+        grid[0][0] = "S"
+        grid[height - 1][width - 1] = "G"
+        layout = ["".join(row) for row in grid]
+
+        # Check reachability without depending on a GridWorld instance.
+        start, goal = 0, height * width - 1
+        obstacles = {
+            r * width + c
+            for r, row in enumerate(layout)
+            for c, cell in enumerate(row)
+            if cell == "#"
+        }
+        seen = {start}
+        queue = [start]
+        head = 0
+        while head < len(queue):
+            s = queue[head]
+            head += 1
+            r, c = divmod(s, width)
+            for dr, dc in MOVES:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < height and 0 <= nc < width:
+                    nxt = nr * width + nc
+                    if nxt not in obstacles and nxt not in seen:
+                        seen.add(nxt)
+                        queue.append(nxt)
+
+        if goal in seen:
+            return layout
+
+    raise ValueError(
+        "Could not generate a solvable maze. Try a lower obstacle_probability "
+        "or a larger max_attempts."
+    )
+
+
+
 class GridWorld:
+    @classmethod
+    def generate_random(cls, height=8, width=8, obstacle_probability=0.20,
+                        slip=0.0, step_reward=-1.0, goal_reward=100.0,
+                        collision_penalty=-10.0, seed=None, max_attempts=1000):
+        """Create a GridWorld using a newly generated solvable maze."""
+        rng = random.Random(seed)
+        layout = generate_random_maze(
+            height=height,
+            width=width,
+            obstacle_probability=obstacle_probability,
+            rng=rng,
+            max_attempts=max_attempts,
+        )
+        return cls(layout, slip, step_reward, goal_reward, collision_penalty)
+
     def __init__(self, layout=SIMPLE_MAZE, slip=0.0, step_reward=-1.0,
                  goal_reward=100.0, collision_penalty=-10.0):
         self.layout = layout
@@ -114,19 +201,33 @@ class GridWorld:
         return s2, r, done, int(col)
 
     def is_connected(self):
-        """BFS check that the goal can be reached from the start."""
-        seen, stack = {self.start}, [self.start]
-        while stack:
-            s = stack.pop()
-            for a in range(4):
+        """Return True if the goal is reachable from the start (BFS)."""
+        seen = {self.start}
+        queue = [self.start]
+        head = 0
+        while head < len(queue):
+            s = queue[head]
+            head += 1
+            for a in range(self.n_actions):
                 s2 = self._move(s, a)[0]
                 if s2 not in seen:
                     seen.add(s2)
-                    stack.append(s2)
+                    queue.append(s2)
         return self.goal in seen
 
 
 if __name__ == "__main__":
-    for name, lay in [("simple", SIMPLE_MAZE), ("complex", COMPLEX_MAZE)]:
-        e = GridWorld(lay)
-        print(name, "free cells:", len(e.free_states), "reachable goal:", e.is_connected())
+    # The two predefined mazes are examples for controlled comparisons.
+    for name, lay in [("simple example", SIMPLE_MAZE),
+                      ("complex example", COMPLEX_MAZE)]:
+        env = GridWorld(lay)
+        print(name, "free cells:", len(env.free_states),
+              "reachable goal:", env.is_connected())
+
+    # A fresh random maze can be generated for each experiment.
+    random_env = GridWorld.generate_random(
+        height=8, width=8, obstacle_probability=0.20, seed=42
+    )
+    print("random maze", "free cells:", len(random_env.free_states),
+          "reachable goal:", random_env.is_connected())
+    print("\n".join(random_env.layout))
